@@ -1,0 +1,12 @@
+{
+	"caCert": "",
+	"cert": "testdata/certificate.pem",
+	"address": "tls://amazonaws.com:8883",
+	"localUsername": "localUsername_config",
+	"localPassword": "localPassword_config",
+	"logFile": "logFile_config",
+	"logLevel": "DEBUG",
+	"topicFilter": "test",
+	"payloadFilters": [".*", "test"],
+	"Non_Supported": "test"
+}
