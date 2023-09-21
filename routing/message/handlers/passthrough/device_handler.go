@@ -18,14 +18,14 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/ThreeDotsLabs/watermill"
-	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/eclipse/ditto-clients-golang/protocol"
-
 	"github.com/eclipse-kanto/aws-connector/config"
 	"github.com/eclipse-kanto/aws-connector/routing/message/handlers"
+
+	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/eclipse-kanto/suite-connector/connector"
 	"github.com/eclipse-kanto/suite-connector/routing"
+	"github.com/eclipse/ditto-clients-golang/protocol"
 )
 
 const (
@@ -108,7 +108,7 @@ func (h *deviceHandler) HandleMessage(msg *message.Message) ([]*message.Message,
 	return h.defaultHandler(msg)
 }
 
-// toShadowTopic convert Ditto topic to its coresponding device shadow topic and if its an update message.
+// toShadowTopic convert Ditto topic to its corresponding device shadow topic and if its an update message.
 func (h *deviceHandler) toShadowTopic(topic *protocol.Topic, featureName string, value interface{}) (res string, update bool) {
 	target := topicUpdate
 	if topic.Action == protocol.ActionDelete && h.isEntireShadow(value) {
@@ -280,21 +280,18 @@ func (h *deviceHandler) toShadowMessages(env *protocol.Envelope) ([]*message.Mes
 			return messages, true
 		}
 
-		// Prepare update messages for found atributes.
+		// Prepare update messages for found attributes.
 		search(valueAttributesTag, value, func(attributes map[string]interface{}) {
-			message := h.toShadowMessage(env, "", attributes)
-			messages = append(messages, message)
+			messages = append(messages, h.toShadowMessage(env, "", attributes))
 		})
 
 		// Prepare update messages for every found feature.
 		search(valueFeaturesTag, value, func(features map[string]interface{}) {
 			for featureName, feature := range features {
 				if feature == nil {
-					message := h.toShadowMessage(env, featureName, nil)
-					messages = append(messages, message)
+					messages = append(messages, h.toShadowMessage(env, featureName, nil))
 				} else if properties, ok := h.getFeatureProperties(feature); ok {
-					message := h.toShadowMessage(env, featureName, properties)
-					messages = append(messages, message)
+					messages = append(messages, h.toShadowMessage(env, featureName, properties))
 				}
 			}
 		})

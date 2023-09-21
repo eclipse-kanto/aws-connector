@@ -13,9 +13,10 @@
 package handlers
 
 import (
+	"github.com/eclipse-kanto/aws-connector/config"
+
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/eclipse-kanto/aws-connector/config"
 )
 
 // MessageHandler represents the internal interface for implementing a message handler.

@@ -14,7 +14,6 @@ package config
 
 import (
 	"flag"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -22,7 +21,6 @@ import (
 	suiteFlags "github.com/eclipse-kanto/suite-connector/flags"
 	"github.com/eclipse-kanto/suite-connector/logger"
 	"github.com/eclipse-kanto/suite-connector/util"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,7 +32,7 @@ const (
 )
 
 func temporary(t *testing.T, path string, content string) func() {
-	err := ioutil.WriteFile(path, []byte(content), os.ModePerm)
+	err := os.WriteFile(path, []byte(content), os.ModePerm)
 	require.NoError(t, err)
 	require.True(t, util.FileExists(path))
 	return func() {

@@ -15,9 +15,9 @@ package flags
 import (
 	"flag"
 
-	"github.com/eclipse-kanto/suite-connector/flags"
-
 	"github.com/eclipse-kanto/aws-connector/config"
+
+	"github.com/eclipse-kanto/suite-connector/flags"
 )
 
 // Add the cloud connector flags and uses the given settings structure to store the values of the flags.

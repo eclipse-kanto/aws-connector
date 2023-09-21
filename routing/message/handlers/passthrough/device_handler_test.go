@@ -17,13 +17,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/eclipse-kanto/aws-connector/config"
+
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/eclipse/ditto-clients-golang/protocol"
-
-	"github.com/eclipse-kanto/aws-connector/config"
 	"github.com/eclipse-kanto/suite-connector/connector"
-
+	"github.com/eclipse/ditto-clients-golang/protocol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -212,7 +211,7 @@ func TestDeleteOfInnerElements(t *testing.T) {
 		"$aws/things/test:device/shadow/name/feature-1/update",
 		`{"state":{"reported":{"property-1":null}}}`)
 
-	// 4. Assert deletion of feture definition (root thing).
+	// 4. Assert deletion of feature definition (root thing).
 	assertDelete(t, "", "/features/feature-1/definition",
 		"$aws/things/test:device/shadow/name/feature-1/update",
 		`{"state":{"reported":{"definition":null}}}`)
@@ -222,7 +221,7 @@ func TestDeleteOfInnerElements(t *testing.T) {
 		"$aws/things/test:device/shadow/name/edge:containers:feature-1/update",
 		`{"state":{"reported":{"property-1":null}}}`)
 
-	// 6. Assert deletion of feture definition (child thing).
+	// 6. Assert deletion of feature definition (child thing).
 	assertDelete(t, ":edge:containers", "/features/feature-1/definition",
 		"$aws/things/test:device/shadow/name/edge:containers:feature-1/update",
 		`{"state":{"reported":{"definition":null}}}`)

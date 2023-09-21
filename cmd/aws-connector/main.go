@@ -17,18 +17,17 @@ import (
 	"log"
 	"os"
 
-	"github.com/imdario/mergo"
-	"github.com/pkg/errors"
-
-	"github.com/eclipse-kanto/suite-connector/config"
-	"github.com/eclipse-kanto/suite-connector/logger"
-
 	"github.com/eclipse-kanto/aws-connector/cmd/aws-connector/app"
 	awscfg "github.com/eclipse-kanto/aws-connector/config"
 	"github.com/eclipse-kanto/aws-connector/flags"
 	"github.com/eclipse-kanto/aws-connector/routing/message/handlers"
 	"github.com/eclipse-kanto/aws-connector/routing/message/handlers/passthrough"
+
+	"github.com/eclipse-kanto/suite-connector/config"
 	suiteFlags "github.com/eclipse-kanto/suite-connector/flags"
+	"github.com/eclipse-kanto/suite-connector/logger"
+	"github.com/imdario/mergo"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -55,8 +54,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "cannot parse config"))
 	}
 
-	cli := suiteFlags.Copy(f)
-	if err := mergo.Map(settings, cli, mergo.WithOverwriteWithEmptyValue); err != nil {
+	if err := mergo.Map(settings, suiteFlags.Copy(f), mergo.WithOverwriteWithEmptyValue); err != nil {
 		log.Fatal(errors.Wrap(err, "cannot process settings"))
 	}
 

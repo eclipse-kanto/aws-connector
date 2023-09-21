@@ -20,8 +20,8 @@ import (
 
 	"github.com/eclipse-kanto/aws-connector/config"
 	"github.com/eclipse-kanto/aws-connector/flags"
-	suiteFlags "github.com/eclipse-kanto/suite-connector/flags"
 
+	suiteFlags "github.com/eclipse-kanto/suite-connector/flags"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

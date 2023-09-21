@@ -15,15 +15,14 @@ package config
 import (
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
-
-	"github.com/pkg/errors"
 
 	"github.com/eclipse-kanto/suite-connector/config"
 	"github.com/eclipse-kanto/suite-connector/logger"
 	suiteUtil "github.com/eclipse-kanto/suite-connector/util"
+	"github.com/pkg/errors"
 )
 
 // CloudSettings represents all configurable data that is used to setup the cloud connector.
@@ -34,6 +33,7 @@ type CloudSettings struct {
 	MessageFilterSettings
 }
 
+// MessageFilterSettings represents all configurable filters.
 type MessageFilterSettings struct {
 	TopicFilter          string `json:"topicFilter"`
 	TopicFilterRegexp    *regexp.Regexp
@@ -41,6 +41,7 @@ type MessageFilterSettings struct {
 	PayloadFiltersRegexp []*regexp.Regexp
 }
 
+// PayloadFiltersType represents payload filters.
 type PayloadFiltersType []string
 
 func (v *PayloadFiltersType) String() string {
@@ -50,11 +51,13 @@ func (v *PayloadFiltersType) String() string {
 	return "[]"
 }
 
+// Set additional payload filter.
 func (v *PayloadFiltersType) Set(value string) error {
 	*v = append(*v, value)
 	return nil
 }
 
+// Get payload filters.
 func (v *PayloadFiltersType) Get() interface{} {
 	return v
 }
@@ -77,7 +80,7 @@ func DefaultSettings() *CloudSettings {
 
 // ReadDeviceID reads device id from PEM encoded certificate.
 func (settings *CloudSettings) ReadDeviceID() error {
-	raw, err := ioutil.ReadFile(settings.Cert)
+	raw, err := os.ReadFile(settings.Cert)
 	if err != nil {
 		return err
 	}
@@ -96,7 +99,7 @@ func (settings *CloudSettings) ReadDeviceID() error {
 	return nil
 }
 
-// ReadDeviceID reads device id from PEM encoded certificate.
+// CompileFilters prepare regex filters.
 func (settings *CloudSettings) CompileFilters() error {
 	if len(settings.TopicFilter) > 0 {
 		if exp, err := regexp.Compile(settings.TopicFilter); err == nil {

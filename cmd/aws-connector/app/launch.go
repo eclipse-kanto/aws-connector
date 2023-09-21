@@ -18,7 +18,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/pkg/errors"
+	awscfg "github.com/eclipse-kanto/aws-connector/config"
+	"github.com/eclipse-kanto/aws-connector/routing/bus"
+	"github.com/eclipse-kanto/aws-connector/routing/message/handlers"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/eclipse-kanto/suite-connector/cache"
@@ -26,10 +28,7 @@ import (
 	"github.com/eclipse-kanto/suite-connector/connector"
 	"github.com/eclipse-kanto/suite-connector/logger"
 	"github.com/eclipse-kanto/suite-connector/routing"
-
-	awscfg "github.com/eclipse-kanto/aws-connector/config"
-	"github.com/eclipse-kanto/aws-connector/routing/bus"
-	"github.com/eclipse-kanto/aws-connector/routing/message/handlers"
+	"github.com/pkg/errors"
 )
 
 func startRouter(

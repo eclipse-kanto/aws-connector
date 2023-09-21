@@ -17,11 +17,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ThreeDotsLabs/watermill"
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/eclipse-kanto/aws-connector/config"
 	"github.com/eclipse-kanto/aws-connector/routing/message/handlers"
 
+	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -80,11 +80,11 @@ func NewDummyMessageHandler(handlerName string, topic string, initErr error) han
 }
 
 // AssertRouterHandler asserts a Watermill router handler.
-func AssertRouterHandler(t *testing.T, expectedHandlerName, expectedSubcribeTopic, expectedPublishTopic string, refHandler reflect.Value) {
+func AssertRouterHandler(t *testing.T, expectedHandlerName, expectedSubscribeTopic, expectedPublishTopic string, refHandler reflect.Value) {
 	handlerName := refHandler.FieldByName(fieldName)
 	assert.Equal(t, expectedHandlerName, handlerName.String())
 	subscribeTopic := refHandler.FieldByName(fieldSubscribeTopic)
-	assert.Equal(t, expectedSubcribeTopic, subscribeTopic.String())
+	assert.Equal(t, expectedSubscribeTopic, subscribeTopic.String())
 	subscriber := refHandler.FieldByName(fieldSubscriber)
 	assert.Equal(t, false, subscriber.IsZero())
 	publishTopic := refHandler.FieldByName(fieldPublishTopic)

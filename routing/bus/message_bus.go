@@ -13,12 +13,12 @@
 package bus
 
 import (
+	"github.com/eclipse-kanto/aws-connector/config"
+	"github.com/eclipse-kanto/aws-connector/routing/message/handlers"
+
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/eclipse-kanto/suite-connector/connector"
-
-	"github.com/eclipse-kanto/aws-connector/config"
-	"github.com/eclipse-kanto/aws-connector/routing/message/handlers"
 )
 
 // MessageBus creates the message bus for processing & forwarding the messages from the Subscriber to the Publisher.

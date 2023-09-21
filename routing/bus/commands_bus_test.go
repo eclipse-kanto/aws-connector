@@ -17,13 +17,12 @@ import (
 	"reflect"
 	"testing"
 
+	test "github.com/eclipse-kanto/aws-connector/routing/bus/internal/testing"
+
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
-
-	test "github.com/eclipse-kanto/aws-connector/routing/bus/internal/testing"
 	"github.com/eclipse-kanto/suite-connector/cache"
 	"github.com/eclipse-kanto/suite-connector/connector"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

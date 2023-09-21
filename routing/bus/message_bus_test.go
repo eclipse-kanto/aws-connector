@@ -16,16 +16,14 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/pkg/errors"
-
-	"github.com/ThreeDotsLabs/watermill"
-	"github.com/ThreeDotsLabs/watermill/message"
-
 	"github.com/eclipse-kanto/aws-connector/config"
 	test "github.com/eclipse-kanto/aws-connector/routing/bus/internal/testing"
 	"github.com/eclipse-kanto/aws-connector/routing/message/handlers"
-	"github.com/eclipse-kanto/suite-connector/connector"
 
+	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/eclipse-kanto/suite-connector/connector"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
