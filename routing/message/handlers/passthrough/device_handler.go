@@ -94,13 +94,13 @@ func (h *deviceHandler) Debug(msg string, fields map[string]interface{}) {
 	h.logger.Debug(msg, logFields)
 }
 
-// HandleMessage creates a new message with the same payload as the incoming message and sets the correct topic so that the message can be forwarded to AWS Iot Hub
+// HandleMessage creates a new message with the same payload as the incoming message and sets the correct topic so that the message can be forwarded to AWS IoT Hub
 func (h *deviceHandler) HandleMessage(msg *message.Message) ([]*message.Message, error) {
 	h.Debug("Handle message", map[string]interface{}{"payload": string(msg.Payload)})
 	// Parse message payload (JSON)
 	env := &protocol.Envelope{Headers: protocol.NewHeaders()}
 	if err := json.Unmarshal(msg.Payload, &env); err == nil {
-		// Convert incomming message to shadow messages (if needed)
+		// Convert incoming message to shadow messages (if needed)
 		if messages, ok := h.toShadowMessages(env); ok {
 			return messages, nil
 		}
