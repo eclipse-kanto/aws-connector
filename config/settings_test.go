@@ -20,7 +20,6 @@ import (
 	suiteConfig "github.com/eclipse-kanto/suite-connector/config"
 	suiteFlags "github.com/eclipse-kanto/suite-connector/flags"
 	"github.com/eclipse-kanto/suite-connector/logger"
-	"github.com/eclipse-kanto/suite-connector/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,15 +29,6 @@ const (
 	testCert       = "testdata/certificate.pem"
 	testPrivateKey = "testdata/private.key"
 )
-
-func temporary(t *testing.T, path string, content string) func() {
-	err := os.WriteFile(path, []byte(content), os.ModePerm)
-	require.NoError(t, err)
-	require.True(t, util.FileExists(path))
-	return func() {
-		os.Remove(path)
-	}
-}
 
 func TestPayloadFilter(t *testing.T) {
 	f := flag.NewFlagSet("testing", flag.ContinueOnError)
@@ -85,10 +75,12 @@ func TestTopicFilterInvalid(t *testing.T) {
 }
 
 func TestConfigEmpty(t *testing.T) {
-	configPath := "configEmpty.json"
-	defer temporary(t, configPath, "")()
+	f, err := os.CreateTemp("", "configEmpty*.json")
+	require.NoError(t, err)
+	defer os.Remove(f.Name())
+
 	cmd := new(CloudSettings)
-	assert.NoError(t, suiteConfig.ReadConfig(configPath, cmd))
+	assert.NoError(t, suiteConfig.ReadConfig(f.Name(), cmd))
 }
 
 func TestConfigInvalid(t *testing.T) {

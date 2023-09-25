@@ -35,10 +35,10 @@ type CloudSettings struct {
 
 // MessageFilterSettings represents all configurable filters.
 type MessageFilterSettings struct {
-	TopicFilter          string `json:"topicFilter"`
-	TopicFilterRegexp    *regexp.Regexp
+	TopicFilter          string             `json:"topicFilter"`
+	TopicFilterRegexp    *regexp.Regexp     `json:"-"`
 	PayloadFilters       PayloadFiltersType `json:"payloadFilters"`
-	PayloadFiltersRegexp []*regexp.Regexp
+	PayloadFiltersRegexp []*regexp.Regexp   `json:"-"`
 }
 
 // PayloadFiltersType represents payload filters.

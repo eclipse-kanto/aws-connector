@@ -62,6 +62,10 @@ func main() {
 		log.Fatal(errors.Wrap(err, "cannot read deviceId from its certificate"))
 	}
 
+	if settings.ClientID == "" {
+		settings.ClientID = settings.DeviceID
+	}
+
 	if err := settings.CompileFilters(); err != nil {
 		log.Fatal(errors.Wrap(err, "cannot compile regular expression filters"))
 	}
