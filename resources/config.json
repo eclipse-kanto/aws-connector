@@ -1,0 +1,4 @@
+{
+    "caCert": "/etc/aws-connector/aws.crt",
+    "logFile": "/var/log/aws-connector/aws-connector.log"
+}
