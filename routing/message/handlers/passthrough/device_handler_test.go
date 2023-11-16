@@ -10,7 +10,7 @@
 //
 // SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
-package passthrough
+package passthrough_test
 
 import (
 	"encoding/json"
@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/eclipse-kanto/aws-connector/config"
+	"github.com/eclipse-kanto/aws-connector/routing/message/handlers/passthrough"
 
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -27,11 +28,31 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type DummyShadowStateHolder struct {
+	shadows           map[string]interface{}
+	interractionCount int
+}
+
+var shadowStateHolder = DummyShadowStateHolder{shadows: map[string]interface{}{}}
+
+func (h DummyShadowStateHolder) GetCurrentShadowState(shadowId string) interface{} {
+	h.interractionCount++
+	return h.shadows[shadowId]
+}
+
+func (h DummyShadowStateHolder) add(shadowId string, currentState interface{}) {
+	h.shadows[shadowId] = currentState
+}
+func (h *DummyShadowStateHolder) cleanup() {
+	h.interractionCount = 0
+	h.shadows = map[string]interface{}{}
+}
+
 func TestCreateDefaultDeviceHandler(t *testing.T) {
-	messageHandler := CreateDefaultDeviceHandler()
+	messageHandler := passthrough.CreateDefaultDeviceHandler(shadowStateHolder)
 	require.NoError(t, messageHandler.Init(settings(), watermill.NopLogger{}))
-	assert.Equal(t, deviceHandlerName, messageHandler.Name())
-	assert.Equal(t, topicsLocal, messageHandler.Topics())
+	assert.Equal(t, "passthrough_device_handler", messageHandler.Name())
+	assert.Equal(t, "event/#,e/#,telemetry/#,t/#", messageHandler.Topics())
 }
 
 func TestHandleRootFeatureEvent(t *testing.T) {
@@ -54,6 +75,272 @@ func TestHandleRootFeatureEvent(t *testing.T) {
 	assert.Equal(t, `{"state":{"reported":{"status":200}}}`, messagePayload)
 }
 
+func TestUpdateRootFeaturePropertiesModify(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"headers":{
+			"response-required":false
+		},
+		"path":"/features/test/properties",
+		"value":{
+				"status":200
+		}
+	}`
+	topic := "event"
+
+	currentState := map[string]interface{}{
+		"status":   100,
+		"obsolete": "true",
+	}
+
+	shadowStateHolder.add("test", currentState)
+
+	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
+	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
+	assert.Equal(t, `{"state":{"reported":{"obsolete":null,"status":200}}}`, messagePayload)
+
+	shadowStateHolder.cleanup()
+}
+
+func TestNoInteractionWithShadowStateHandlerWhenMerge(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/merge",
+		"headers":{
+			"response-required":false
+		},
+		"path":"/features/test/properties",
+		"value":{
+				"status":200
+		}
+	}`
+	topic := "event"
+
+	currentState := map[string]interface{}{
+		"status":   100,
+		"obsolete": "true",
+	}
+
+	shadowStateHolder.add("test", currentState)
+
+	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
+	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
+	assert.Equal(t, `{"state":{"reported":{"status":200}}}`, messagePayload)
+	assert.Equal(t, 0, shadowStateHolder.interractionCount)
+
+	shadowStateHolder.cleanup()
+}
+func TestUpdateSingleRootFeatureProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"headers":{
+			"response-required":false
+		},
+		"path":"/features/test/properties/status",
+		"value":200
+	}`
+	topic := "event"
+
+	currentState := map[string]interface{}{
+		"status": 100,
+	}
+
+	shadowStateHolder.add("test", currentState)
+
+	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
+	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
+	assert.Equal(t, `{"state":{"reported":{"status":200}}}`, messagePayload)
+
+	shadowStateHolder.cleanup()
+}
+
+func TestDeleteObsoleteRootFeatureProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"headers":{
+			"response-required":false
+		},
+		"path":"/features/test",
+		"value":{
+			"properties":{
+				"status":200
+			}
+		}
+	}`
+	topic := "event"
+
+	currentState := map[string]interface{}{
+		"status":   100,
+		"obsolete": "true",
+	}
+
+	shadowStateHolder.add("test", currentState)
+
+	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
+	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
+	assert.Equal(t, `{"state":{"reported":{"obsolete":null,"status":200}}}`, messagePayload)
+
+	shadowStateHolder.cleanup()
+}
+
+func TestPartiallyUpdateRootFeatureProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"headers":{
+			"response-required":false
+		},
+		"path":"/features/test/properties/status/code",
+		"value":200
+	}`
+	topic := "event"
+
+	currentState := map[string]interface{}{
+		"status":   100,
+		"obsolete": "false",
+	}
+
+	shadowStateHolder.add("test", currentState)
+
+	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
+	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
+	assert.Equal(t, `{"state":{"reported":{"status":{"code":200}}}}`, messagePayload)
+
+	shadowStateHolder.cleanup()
+}
+
+func TestPartiallyUpdateRootFeatureComplexSubProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"headers":{
+			"response-required":false
+		},
+		"path":"/features/test/properties/status/error",
+		"value":{
+			"code": 404,
+			"message": "Not Found"
+		}
+	}`
+	topic := "event"
+
+	currentState := map[string]interface{}{
+		"status": map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":     200,
+				"message":  "No Error",
+				"obsolete": true,
+			},
+		},
+		"notObsolete": "true",
+	}
+
+	shadowStateHolder.add("test", currentState)
+
+	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
+	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
+	assert.Equal(t, `{"state":{"reported":{"status":{"error":{"code":404,"message":"Not Found","obsolete":null}}}}}`, messagePayload)
+
+	shadowStateHolder.cleanup()
+}
+func TestDoesNotDeleteRootFeaturePropertiesWhenPartiallyUpdatingOtherProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"headers":{
+			"response-required":false
+		},
+		"path":"/features/test/properties/status",
+		"value":{
+			"code": 200
+		}
+	}`
+	topic := "event"
+
+	currentState := map[string]interface{}{
+		"status": map[string]interface{}{
+			"code": 100,
+		},
+		"obsolete": "false",
+	}
+
+	shadowStateHolder.add("test", currentState)
+
+	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
+	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
+	assert.Equal(t, `{"state":{"reported":{"status":{"code":200}}}}`, messagePayload)
+
+	shadowStateHolder.cleanup()
+}
+
+func TestDeleteObsoleteRootFeatureNestedMapProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"headers":{
+			"response-required":false
+		},
+		"path":"/features/test",
+		"value":{
+			"properties":{
+				"nested": {
+					"status": 200
+				}
+			}
+		}
+	}`
+	topic := "event"
+
+	currentState := map[string]interface{}{
+		"nested": map[string]interface{}{
+			"status":   100,
+			"obsolete": "true",
+		},
+	}
+
+	shadowStateHolder.add("test", currentState)
+
+	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
+	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
+	assert.Equal(t, `{"state":{"reported":{"nested":{"obsolete":null,"status":200}}}}`, messagePayload)
+
+	shadowStateHolder.cleanup()
+}
+
+func TestDeleteObsoleteRootFeatureNestedArrayProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"headers":{
+			"response-required":false
+		},
+		"path":"/features/test",
+		"value":{
+			"properties":{
+				"nested": [
+					"firstElementNew",
+					{
+						"status": 200
+					}
+				]
+			}
+		}
+	}`
+	topic := "event"
+
+	currentState := map[string]interface{}{
+		"nested": []interface{}{
+			"firstElementOld",
+			map[string]interface{}{
+				"status":   100,
+				"obsolete": "true",
+			},
+		},
+	}
+
+	shadowStateHolder.add("test", currentState)
+
+	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
+	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
+	assert.Equal(t, `{"state":{"reported":{"nested":["firstElementNew",{"obsolete":null,"status":200}]}}}`, messagePayload)
+
+	shadowStateHolder.cleanup()
+}
+
 func TestHandleFeatureNoProperties(t *testing.T) {
 	payload := `{
 		"topic":"test/device/things/twin/commands/modify",
@@ -72,6 +359,30 @@ func TestHandleFeatureNoProperties(t *testing.T) {
 	assert.Equal(t, `{"state":{"reported":{"definition":["test:Definition:1.0.0"]}}}`, messagePayload)
 }
 
+func TestDeleteObsoleteElementFromArrayInFeatureNoProperties(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"headers":{
+			"response-required":false
+		},
+		"path":"/features/test",
+		"value":{
+			"definition":["test:Definition:1.0.0"]
+		}
+	}`
+	topic := "event"
+
+	currentState := map[string]interface{}{
+		"definition": []string{"old:Definition:1.0.0", "obsolete:1.0.0"},
+	}
+	shadowStateHolder.add("test", currentState)
+
+	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
+	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
+	assert.Equal(t, `{"state":{"reported":{"definition":["test:Definition:1.0.0"]}}}`, messagePayload)
+
+	shadowStateHolder.cleanup()
+}
 func TestHandleRootThingAttributes(t *testing.T) {
 	payload := `{
 		"topic":"test/device/things/twin/commands/modify",
@@ -88,6 +399,29 @@ func TestHandleRootThingAttributes(t *testing.T) {
 	assert.Equal(t, `{"state":{"reported":{"test":200}}}`, messagePayload)
 }
 
+func TestDoNotRemoveRootThingAttributeWhenUpdatingAnotherAttribute(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"headers":{
+			"response-required":false
+		},
+		"path":"/attributes/test",
+		"value":200
+	}`
+	topic := "event"
+
+	currentState := map[string]interface{}{
+		"test":     100,
+		"obsolete": "false",
+	}
+	shadowStateHolder.add("test:device", currentState)
+
+	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
+	assert.Equal(t, "$aws/things/test:device/shadow/update", messageTopic)
+	assert.Equal(t, `{"state":{"reported":{"test":200}}}`, messagePayload)
+
+	shadowStateHolder.cleanup()
+}
 func TestHandleChildFeatureEvent(t *testing.T) {
 	payload := `{
 		"topic":"test/device:edge:containers/things/twin/commands/modify",
@@ -104,6 +438,29 @@ func TestHandleChildFeatureEvent(t *testing.T) {
 	assert.Equal(t, `{"state":{"reported":{"status":200}}}`, messagePayload)
 }
 
+func TestDoesNotRemoveChildFeaturePropertyWhenPartiallyUpdatingOtherProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device:edge:containers/things/twin/commands/modify",
+		"headers":{
+			"response-required":false
+		},
+		"path":"/features/test/properties/status",
+		"value":200
+	}`
+	topic := "event"
+
+	currentState := map[string]interface{}{
+		"status":   100,
+		"obsolete": "false",
+	}
+	shadowStateHolder.add("edge:containers:test", currentState)
+
+	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
+	assert.Equal(t, "$aws/things/test:device/shadow/name/edge:containers:test/update", messageTopic)
+	assert.Equal(t, `{"state":{"reported":{"status":200}}}`, messagePayload)
+
+	shadowStateHolder.cleanup()
+}
 func TestHandleChildThingAttributes(t *testing.T) {
 	payload := `{
 		"topic":"test/device:edge:containers/things/twin/commands/modify",
@@ -118,6 +475,30 @@ func TestHandleChildThingAttributes(t *testing.T) {
 	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
 	assert.Equal(t, "$aws/things/test:device/shadow/name/edge:containers/update", messageTopic)
 	assert.Equal(t, `{"state":{"reported":{"test":200}}}`, messagePayload)
+}
+
+func TestDoNotRemoveChildThingAttributeWhenPartiallyUpdatingAnotherAttribute(t *testing.T) {
+	payload := `{
+		"topic":"test/device:edge:containers/things/twin/commands/modify",
+		"headers":{
+			"response-required":false
+		},
+		"path":"/attributes/test",
+		"value":200
+	}`
+	topic := "event"
+
+	currentState := map[string]interface{}{
+		"test":     100,
+		"obsolete": "false",
+	}
+	shadowStateHolder.add("edge:containers", currentState)
+
+	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
+	assert.Equal(t, "$aws/things/test:device/shadow/name/edge:containers/update", messageTopic)
+	assert.Equal(t, `{"state":{"reported":{"test":200}}}`, messagePayload)
+
+	shadowStateHolder.cleanup()
 }
 
 func TestPayloadFilter(t *testing.T) {
@@ -159,7 +540,7 @@ func TestPayloadFilterEntireValue(t *testing.T) {
 	topic := "event"
 
 	settings := filters(t, "", ".*")
-	messageHandler := CreateDefaultDeviceHandler()
+	messageHandler := passthrough.CreateDefaultDeviceHandler(shadowStateHolder)
 	require.NoError(t, messageHandler.Init(settings, watermill.NopLogger{}))
 
 	message := &message.Message{Payload: []byte(payload)}
@@ -184,7 +565,7 @@ func TestTopicFilter(t *testing.T) {
 	topic := "event"
 
 	settings := filters(t, "^test/device:edge:containers/.*")
-	messageHandler := CreateDefaultDeviceHandler()
+	messageHandler := passthrough.CreateDefaultDeviceHandler(shadowStateHolder)
 	require.NoError(t, messageHandler.Init(settings, watermill.NopLogger{}))
 
 	message := &message.Message{Payload: []byte(payload)}
@@ -292,7 +673,7 @@ func requireValidMessage(t *testing.T, topic string, payload string) (string, st
 }
 
 func requireValidMessageSettings(t *testing.T, settings *config.CloudSettings, topic string, payload string) (string, string) {
-	messageHandler := CreateDefaultDeviceHandler()
+	messageHandler := passthrough.CreateDefaultDeviceHandler(shadowStateHolder)
 	require.NoError(t, messageHandler.Init(settings, watermill.NopLogger{}))
 
 	message := &message.Message{Payload: []byte(payload)}
@@ -315,9 +696,7 @@ func settings() *config.CloudSettings {
 }
 
 func filters(t *testing.T, topic string, payload ...string) *config.CloudSettings {
-	settings := &config.CloudSettings{}
-	settings.TenantID = "test-tenant-id"
-	settings.DeviceID = "test:device"
+	settings := settings()
 	if len(topic) > 0 {
 		settings.TopicFilter = topic
 	}

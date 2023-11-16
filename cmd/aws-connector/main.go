@@ -22,6 +22,7 @@ import (
 	"github.com/eclipse-kanto/aws-connector/flags"
 	"github.com/eclipse-kanto/aws-connector/routing/message/handlers"
 	"github.com/eclipse-kanto/aws-connector/routing/message/handlers/passthrough"
+	"github.com/eclipse-kanto/aws-connector/routing/message/handlers/state"
 
 	"github.com/eclipse-kanto/suite-connector/config"
 	suiteFlags "github.com/eclipse-kanto/suite-connector/flags"
@@ -80,10 +81,14 @@ func main() {
 	logger.Infof("Starting aws connector %s", version)
 	suiteFlags.ConfigCheck(logger, *fConfigFile)
 
-	deviceHandlers := []handlers.MessageHandler{
-		passthrough.CreateDefaultDeviceHandler(),
+	shadowStateHandler := state.CreateDefaultShadowStateHandler()
+	cloudHandlers := []handlers.MessageHandler{
+		shadowStateHandler,
 	}
-	cloudHandlers := []handlers.MessageHandler{}
+
+	deviceHandlers := []handlers.MessageHandler{
+		passthrough.CreateDefaultDeviceHandler(shadowStateHandler.(passthrough.ShadowStateHolder)),
+	}
 
 	if err := app.MainLoop(settings, logger, deviceHandlers, cloudHandlers); err != nil {
 		logger.Error("Init failure", err, nil)

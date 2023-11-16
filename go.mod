@@ -11,8 +11,11 @@ require (
 	github.com/stretchr/testify v1.8.1
 )
 
+require github.com/PaesslerAG/gval v1.0.0 // indirect
+
 require (
 	github.com/Jeffail/gabs/v2 v2.6.0 // indirect
+	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/cenkalti/backoff/v3 v3.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/eclipse/paho.mqtt.golang v1.4.1 // indirect
