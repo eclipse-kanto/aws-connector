@@ -71,13 +71,13 @@ func (h *shadowStateHandler) HandleMessage(message *message.Message) ([]*message
 	topic, ok := connector.TopicFromCtx(message.Context())
 	if !ok {
 		h.debug("topic missing", nil)
-		return nil, errors.New("No topic in context.")
+		return nil, errors.New("No topic in context")
 	}
 
-	shadowId := h.getShadowID(topic)
+	shadowID := h.getShadowID(topic)
 
 	if strings.HasSuffix(topic, "/delete/accepted") {
-		delete(shadows, shadowId)
+		delete(shadows, shadowID)
 		return nil, nil
 	}
 
@@ -93,19 +93,19 @@ func (h *shadowStateHandler) HandleMessage(message *message.Message) ([]*message
 		return nil, errors.New("Invalid Payload structure")
 	}
 
-	shadows[shadowId] = reported
+	shadows[shadowID] = reported
 
 	return nil, nil
 }
 
 func (h shadowStateHandler) getShadowID(topic string) string {
-	const shadowIdIndex = 5
+	const shadowIDIndex = 5
 
 	if !strings.Contains(topic, "/name/") {
 		return h.deviceID
 	}
 
-	return strings.Split(topic, "/")[shadowIdIndex]
+	return strings.Split(topic, "/")[shadowIDIndex]
 }
 
 // Name returns the name of the message handler.
