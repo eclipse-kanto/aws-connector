@@ -74,7 +74,7 @@ func (h *shadowStateHandler) HandleMessage(message *message.Message) ([]*message
 		return nil, errors.New("No topic in context.")
 	}
 
-	shadowId := h.getShadowId(topic)
+	shadowId := h.getShadowID(topic)
 
 	if strings.HasSuffix(topic, "/delete/accepted") {
 		delete(shadows, shadowId)
@@ -84,13 +84,13 @@ func (h *shadowStateHandler) HandleMessage(message *message.Message) ([]*message
 	var payload interface{}
 	if err := json.Unmarshal(message.Payload, &payload); err != nil {
 		h.debug("Could not parse message.", map[string]interface{}{"payload": string(message.Payload)})
-		return nil, errors.New("Invalid json payload.")
+		return nil, errors.New("Invalid json payload")
 	}
 
 	reported, err := jsonpath.Get("$.state.reported", payload)
 	if err != nil {
 		h.debug("Reported state missing", map[string]interface{}{"payload": string(message.Payload)})
-		return nil, errors.New("Invalid Payload structure.")
+		return nil, errors.New("Invalid Payload structure")
 	}
 
 	shadows[shadowId] = reported
@@ -98,7 +98,7 @@ func (h *shadowStateHandler) HandleMessage(message *message.Message) ([]*message
 	return nil, nil
 }
 
-func (h shadowStateHandler) getShadowId(topic string) string {
+func (h shadowStateHandler) getShadowID(topic string) string {
 	const shadowIdIndex = 5
 
 	if !strings.Contains(topic, "/name/") {
@@ -121,8 +121,8 @@ func (h shadowStateHandler) Topics() string {
 // GetCurrentShadowState returns the last known state of the shadow with the given id.
 // The root shadow state is kept under <DEVICVE_ID>.
 // If no shadow state for the given id is available a nil value is returned.
-func (h shadowStateHandler) GetCurrentShadowState(shadowId string) interface{} {
-	return shadows[shadowId]
+func (h shadowStateHandler) GetCurrentShadowState(shadowID string) interface{} {
+	return shadows[shadowID]
 }
 
 func (h *shadowStateHandler) debug(msg string, fields map[string]interface{}) {

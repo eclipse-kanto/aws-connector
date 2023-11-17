@@ -108,7 +108,7 @@ func (h *deviceHandler) HandleMessage(msg *message.Message) ([]*message.Message,
 }
 
 // toShadowTopic convert Ditto topic to its corresponding device shadow topic and if its an update message.
-func (h *deviceHandler) toShadowTopic(topic *protocol.Topic, featureName string, value interface{}) (res string, update bool, shadowId string) {
+func (h *deviceHandler) toShadowTopic(topic *protocol.Topic, featureName string, value interface{}) (res string, update bool, shadowID string) {
 	target := topicUpdate
 	if topic.Action == protocol.ActionDelete && h.isEntireShadow(value) {
 		target = topicDelete
@@ -128,12 +128,12 @@ func (h *deviceHandler) toShadowTopic(topic *protocol.Topic, featureName string,
 	}
 	if featureName == "" {
 		// Update child thing attributes.
-		shadowId := topicID[len(h.deviceID)+1:]
-		return fmt.Sprintf(topicNamedShadow, h.deviceID, shadowId, target), update, shadowId
+		shadowID = topicID[len(h.deviceID)+1:]
+		return fmt.Sprintf(topicNamedShadow, h.deviceID, shadowID, target), update, shadowID
 	}
 	// Update child thing feature.
-	shadowId = fmt.Sprintf("%s:%s", topicID[len(h.deviceID)+1:], featureName)
-	return fmt.Sprintf(topicNamedShadow, h.deviceID, shadowId, target), update, shadowId
+	shadowID = fmt.Sprintf("%s:%s", topicID[len(h.deviceID)+1:], featureName)
+	return fmt.Sprintf(topicNamedShadow, h.deviceID, shadowID, target), update, shadowID
 }
 
 // isDittoRequest returns true if provided message is Ditto request to the connected device.
@@ -188,11 +188,11 @@ func integrate(path []string, value interface{}) interface{} {
 
 // toShadowMessage convert Ditto data to device shadow message.
 func (h *deviceHandler) toShadowMessage(env *protocol.Envelope, featureName string, value interface{}) *message.Message {
-	topic, update, shadowId := h.toShadowTopic(env.Topic, featureName, value)
+	topic, update, shadowID := h.toShadowTopic(env.Topic, featureName, value)
 
 	var payload message.Payload
 	if update {
-		value = h.mergeWithCurrentShadowState(shadowId, value, env)
+		value = h.mergeWithCurrentShadowState(shadowID, value, env)
 		// Adds shadow prefix infront: ["state", "reported"]
 		value = integrate([]string{valueStateTag, valueReportedTag}, value)
 		payload, _ = json.Marshal(value)
