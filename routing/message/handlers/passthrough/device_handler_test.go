@@ -10,7 +10,7 @@
 //
 // SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
-package passthrough_test
+package passthrough
 
 import (
 	"encoding/json"
@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	"github.com/eclipse-kanto/aws-connector/config"
-	"github.com/eclipse-kanto/aws-connector/routing/message/handlers/passthrough"
 
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -49,7 +48,7 @@ func (h *DummyShadowStateHolder) cleanup() {
 }
 
 func TestCreateDefaultDeviceHandler(t *testing.T) {
-	messageHandler := passthrough.CreateDefaultDeviceHandler(shadowStateHolder)
+	messageHandler := CreateDefaultDeviceHandler(shadowStateHolder)
 	require.NoError(t, messageHandler.Init(settings(), watermill.NopLogger{}))
 	assert.Equal(t, "passthrough_device_handler", messageHandler.Name())
 	assert.Equal(t, "event/#,e/#,telemetry/#,t/#", messageHandler.Topics())
@@ -540,7 +539,7 @@ func TestPayloadFilterEntireValue(t *testing.T) {
 	topic := "event"
 
 	settings := filters(t, "", ".*")
-	messageHandler := passthrough.CreateDefaultDeviceHandler(shadowStateHolder)
+	messageHandler := CreateDefaultDeviceHandler(shadowStateHolder)
 	require.NoError(t, messageHandler.Init(settings, watermill.NopLogger{}))
 
 	message := &message.Message{Payload: []byte(payload)}
@@ -565,7 +564,7 @@ func TestTopicFilter(t *testing.T) {
 	topic := "event"
 
 	settings := filters(t, "^test/device:edge:containers/.*")
-	messageHandler := passthrough.CreateDefaultDeviceHandler(shadowStateHolder)
+	messageHandler := CreateDefaultDeviceHandler(shadowStateHolder)
 	require.NoError(t, messageHandler.Init(settings, watermill.NopLogger{}))
 
 	message := &message.Message{Payload: []byte(payload)}
@@ -673,7 +672,7 @@ func requireValidMessage(t *testing.T, topic string, payload string) (string, st
 }
 
 func requireValidMessageSettings(t *testing.T, settings *config.CloudSettings, topic string, payload string) (string, string) {
-	messageHandler := passthrough.CreateDefaultDeviceHandler(shadowStateHolder)
+	messageHandler := CreateDefaultDeviceHandler(shadowStateHolder)
 	require.NoError(t, messageHandler.Init(settings, watermill.NopLogger{}))
 
 	message := &message.Message{Payload: []byte(payload)}

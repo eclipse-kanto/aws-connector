@@ -10,7 +10,7 @@
 //
 // SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
-package state_test
+package state
 
 import (
 	"testing"
@@ -18,15 +18,15 @@ import (
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/eclipse-kanto/aws-connector/config"
+	"github.com/eclipse-kanto/aws-connector/routing/message/handlers"
 	"github.com/eclipse-kanto/aws-connector/routing/message/handlers/passthrough"
-	"github.com/eclipse-kanto/aws-connector/routing/message/handlers/state"
 	"github.com/eclipse-kanto/suite-connector/connector"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateDefaultHandler(t *testing.T) {
-	handler := state.CreateDefaultShadowStateHandler()
+	handler := CreateDefaultShadowStateHandler()
 
 	require.NoError(t, handler.Init(settings(), watermill.NopLogger{}))
 	assert.Equal(t, "shadow_state_handler", handler.Name())
@@ -34,55 +34,52 @@ func TestCreateDefaultHandler(t *testing.T) {
 }
 
 func TestErrorWhenTopicMissingInMessage(t *testing.T) {
-	handler := state.CreateDefaultShadowStateHandler()
+	handler := CreateDefaultShadowStateHandler()
 	handler.Init(settings(), watermill.NopLogger{})
+	payload := `{
+		"state": {
+			"reported": {
+				"test": "value"
+			}
+		}
+	}`
 
-	message := &message.Message{Payload: []byte("payload")}
+	message := &message.Message{Payload: []byte(payload)}
+
 	result, err := handler.HandleMessage(message)
 	assert.NotNil(t, err)
 	assert.Nil(t, result)
 }
 
 func TestErrorWhenUpdatingAndPayloadNotMap(t *testing.T) {
-	handler := state.CreateDefaultShadowStateHandler()
-	handler.Init(settings(), watermill.NopLogger{})
-
-	message := &message.Message{Payload: []byte("payload")}
-	message.SetContext(connector.SetTopicToCtx(message.Context(), "$aws/things/test:device/shadow/update/accepted"))
-
+	handler, message := setUp([]byte("payload"), "$aws/things/test:device/shadow/update/accepted")
 	result, err := handler.HandleMessage(message)
 	assert.NotNil(t, err)
 	assert.Nil(t, result)
 }
 
 func TestNoErrorWhenDeletingAndPayloadNotMap(t *testing.T) {
-	handler := state.CreateDefaultShadowStateHandler()
-	handler.Init(settings(), watermill.NopLogger{})
-
-	message := &message.Message{Payload: []byte("payload")}
-	message.SetContext(connector.SetTopicToCtx(message.Context(), "$aws/things/test:device/shadow/delete/accepted"))
-
+	handler, message := setUp([]byte("payload"), "$aws/things/test:device/shadow/delete/accepted")
 	result, err := handler.HandleMessage(message)
 	assert.Nil(t, err)
 	assert.Nil(t, result)
 }
 
 func TestErrorWhenPayloadHasNoStateFieldStructure(t *testing.T) {
-	handler := state.CreateDefaultShadowStateHandler()
-	handler.Init(settings(), watermill.NopLogger{})
-
-	message := &message.Message{Payload: []byte(`{"payload": "invalid"}`)}
-	message.SetContext(connector.SetTopicToCtx(message.Context(), "$aws/things/test:device/shadow/update/accepted"))
-
+	handler, message := setUp([]byte(`{"payload": "invalid"}`), "$aws/things/test:device/shadow/update/accepted")
 	result, err := handler.HandleMessage(message)
 	assert.NotNil(t, err)
 	assert.Nil(t, result)
 }
 
+func TestNoErrorWhenDeletingAndPayloadNoStateFieldStructure(t *testing.T) {
+	handler, message := setUp([]byte(`{"payload": "invalid"}`), "$aws/things/test:device/shadow/delete/accepted")
+	result, err := handler.HandleMessage(message)
+	assert.Nil(t, err)
+	assert.Nil(t, result)
+}
+
 func TestUpdateRootShadow(t *testing.T) {
-	handler := state.CreateDefaultShadowStateHandler()
-	handler.Init(settings(), watermill.NopLogger{})
-	shadowHolder := handler.(passthrough.ShadowStateHolder)
 	payload := `{
 		"state": {
 			"reported": {
@@ -95,8 +92,8 @@ func TestUpdateRootShadow(t *testing.T) {
 		"test": "value",
 	}
 
-	message := &message.Message{Payload: []byte(payload)}
-	message.SetContext(connector.SetTopicToCtx(message.Context(), "$aws/things/test:device/shadow/update/accepted"))
+	handler, message := setUp([]byte(payload), "$aws/things/test:device/shadow/update/accepted")
+	shadowHolder := handler.(passthrough.ShadowStateHolder)
 
 	result, err := handler.HandleMessage(message)
 	assert.Nil(t, err)
@@ -107,9 +104,6 @@ func TestUpdateRootShadow(t *testing.T) {
 }
 
 func TestDeleteRootShadow(t *testing.T) {
-	handler := state.CreateDefaultShadowStateHandler()
-	handler.Init(settings(), watermill.NopLogger{})
-	shadowHolder := handler.(passthrough.ShadowStateHolder)
 	payload := `{
 		"state": {
 			"reported": {
@@ -118,8 +112,8 @@ func TestDeleteRootShadow(t *testing.T) {
 		}
 	}`
 
-	message := &message.Message{Payload: []byte(payload)}
-	message.SetContext(connector.SetTopicToCtx(message.Context(), "$aws/things/test:device/shadow/update/accepted"))
+	handler, message := setUp([]byte(payload), "$aws/things/test:device/shadow/update/accepted")
+	shadowHolder := handler.(passthrough.ShadowStateHolder)
 
 	result, err := handler.HandleMessage(message)
 	assert.Nil(t, err)
@@ -136,9 +130,6 @@ func TestDeleteRootShadow(t *testing.T) {
 }
 
 func TestUpdateChildShadow(t *testing.T) {
-	handler := state.CreateDefaultShadowStateHandler()
-	handler.Init(settings(), watermill.NopLogger{})
-	shadowHolder := handler.(passthrough.ShadowStateHolder)
 	payload := `{
 			"state": {
 				"reported": {
@@ -151,8 +142,8 @@ func TestUpdateChildShadow(t *testing.T) {
 		"test": "value",
 	}
 
-	message := &message.Message{Payload: []byte(payload)}
-	message.SetContext(connector.SetTopicToCtx(message.Context(), "$aws/things/test:device/shadow/name/test:device:child/update/accepted"))
+	handler, message := setUp([]byte(payload), "$aws/things/test:device/shadow/name/test:device:child/update/accepted")
+	shadowHolder := handler.(passthrough.ShadowStateHolder)
 
 	result, err := handler.HandleMessage(message)
 	assert.Nil(t, err)
@@ -163,9 +154,6 @@ func TestUpdateChildShadow(t *testing.T) {
 }
 
 func TestDeleteChildShadow(t *testing.T) {
-	handler := state.CreateDefaultShadowStateHandler()
-	handler.Init(settings(), watermill.NopLogger{})
-	shadowHolder := handler.(passthrough.ShadowStateHolder)
 	payload := `{
 			"state": {
 				"reported": {
@@ -174,8 +162,8 @@ func TestDeleteChildShadow(t *testing.T) {
 			}
 		}`
 
-	message := &message.Message{Payload: []byte(payload)}
-	message.SetContext(connector.SetTopicToCtx(message.Context(), "$aws/things/test:device/shadow/name/test:device:child/update/accepted"))
+	handler, message := setUp([]byte(payload), "$aws/things/test:device/shadow/name/test:device:child/update/accepted")
+	shadowHolder := handler.(passthrough.ShadowStateHolder)
 
 	result, err := handler.HandleMessage(message)
 	assert.Nil(t, err)
@@ -190,6 +178,16 @@ func TestDeleteChildShadow(t *testing.T) {
 	currentState = shadowHolder.GetCurrentShadowState("test:device:child")
 
 	assert.Nil(t, currentState)
+}
+
+func setUp(payload []byte, topic string) (handlers.MessageHandler, *message.Message) {
+	handler := CreateDefaultShadowStateHandler()
+	handler.Init(settings(), watermill.NopLogger{})
+
+	message := &message.Message{Payload: payload}
+	message.SetContext(connector.SetTopicToCtx(message.Context(), topic))
+
+	return handler, message
 }
 
 func settings() *config.CloudSettings {

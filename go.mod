@@ -3,6 +3,7 @@ module github.com/eclipse-kanto/aws-connector
 go 1.17
 
 require (
+	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/ThreeDotsLabs/watermill v1.1.1
 	github.com/eclipse-kanto/suite-connector v0.1.0-M3
 	github.com/eclipse/ditto-clients-golang v0.0.0-20220225085802-cf3b306280d3
@@ -11,11 +12,9 @@ require (
 	github.com/stretchr/testify v1.8.1
 )
 
-require github.com/PaesslerAG/gval v1.0.0 // indirect
-
 require (
 	github.com/Jeffail/gabs/v2 v2.6.0 // indirect
-	github.com/PaesslerAG/jsonpath v0.1.1
+	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/cenkalti/backoff/v3 v3.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/eclipse/paho.mqtt.golang v1.4.1 // indirect

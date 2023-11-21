@@ -69,11 +69,11 @@ func (h *shadowStateHandler) Init(settings *config.CloudSettings, logger watermi
 // This handler provides no messages and returns nil value for the message.Message array.
 func (h *shadowStateHandler) HandleMessage(message *message.Message) ([]*message.Message, error) {
 	topic, ok := connector.TopicFromCtx(message.Context())
+
 	if !ok {
 		h.debug("topic missing", nil)
 		return nil, errors.New("No topic in context")
 	}
-
 	shadowID := h.getShadowID(topic)
 
 	if strings.HasSuffix(topic, "/delete/accepted") {

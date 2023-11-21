@@ -12,8 +12,8 @@
 
 package passthrough
 
-// ShadowStateHolder Containes information for the current state of the shadows
+// ShadowStateHolder contains information for the current state of the shadows
 type ShadowStateHolder interface {
-	// GetCurrentShadowState provides the current state of the shadow with the specified shadowId
+	// GetCurrentShadowState provides the current state of the shadow with the specified shadowID
 	GetCurrentShadowState(shadowID string) interface{}
 }
