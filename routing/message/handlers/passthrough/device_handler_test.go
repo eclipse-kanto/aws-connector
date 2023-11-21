@@ -34,14 +34,15 @@ type DummyShadowStateHolder struct {
 
 var shadowStateHolder = DummyShadowStateHolder{shadows: map[string]interface{}{}}
 
-func (h DummyShadowStateHolder) GetCurrentShadowState(shadowId string) interface{} {
+func (h DummyShadowStateHolder) GetCurrentShadowState(shadowID string) interface{} {
 	h.interractionCount++
-	return h.shadows[shadowId]
+	return h.shadows[shadowID]
 }
 
-func (h DummyShadowStateHolder) add(shadowId string, currentState interface{}) {
-	h.shadows[shadowId] = currentState
+func (h DummyShadowStateHolder) add(shadowID string, currentState interface{}) {
+	h.shadows[shadowID] = currentState
 }
+
 func (h *DummyShadowStateHolder) cleanup() {
 	h.interractionCount = 0
 	h.shadows = map[string]interface{}{}
