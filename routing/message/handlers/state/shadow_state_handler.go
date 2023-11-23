@@ -18,11 +18,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/PaesslerAG/jsonpath"
-	"github.com/ThreeDotsLabs/watermill"
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/eclipse-kanto/aws-connector/config"
 	"github.com/eclipse-kanto/aws-connector/routing/message/handlers"
+
+	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/eclipse-kanto/suite-connector/connector"
 )
 
@@ -87,8 +87,8 @@ func (h *shadowStateHandler) HandleMessage(message *message.Message) ([]*message
 		return nil, errors.New("Invalid json payload")
 	}
 
-	reported, err := jsonpath.Get("$.state.reported", payload)
-	if err != nil {
+	reported, found := getReportedState(payload)
+	if !found {
 		h.debug("Reported state missing", map[string]interface{}{"payload": string(message.Payload)})
 		return nil, errors.New("Invalid Payload structure")
 	}
@@ -96,6 +96,30 @@ func (h *shadowStateHandler) HandleMessage(message *message.Message) ([]*message
 	shadows[shadowID] = reported
 
 	return nil, nil
+}
+
+func getReportedState(payload interface{}) (interface{}, bool) {
+	state, found := find("state", payload)
+	if !found {
+		return nil, false
+	}
+
+	return find("reported", state)
+}
+
+func find(name string, values interface{}) (interface{}, bool) {
+	valuesMap, ok := values.(map[string]interface{})
+	if !ok {
+		return nil, false
+	}
+
+	result, found := valuesMap[name]
+
+	if !found || result == nil {
+		return nil, false
+	}
+
+	return result, true
 }
 
 func (h shadowStateHandler) getShadowID(topic string) string {

@@ -13,6 +13,7 @@
 package state
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/ThreeDotsLabs/watermill"
@@ -25,6 +26,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const validPayload = `{
+		"state": {
+			"reported": {
+				"test": "value"
+			}
+		}
+	}`
+
+var expectedShadowState = map[string]interface{}{
+	"test": "value",
+}
+
 func TestCreateDefaultHandler(t *testing.T) {
 	handler := CreateDefaultShadowStateHandler()
 
@@ -36,15 +49,8 @@ func TestCreateDefaultHandler(t *testing.T) {
 func TestErrorWhenTopicMissingInMessage(t *testing.T) {
 	handler := CreateDefaultShadowStateHandler()
 	handler.Init(settings(), watermill.NopLogger{})
-	payload := `{
-		"state": {
-			"reported": {
-				"test": "value"
-			}
-		}
-	}`
 
-	message := &message.Message{Payload: []byte(payload)}
+	message := &message.Message{Payload: []byte(validPayload)}
 
 	result, err := handler.HandleMessage(message)
 	assert.NotNil(t, err)
@@ -52,139 +58,101 @@ func TestErrorWhenTopicMissingInMessage(t *testing.T) {
 }
 
 func TestErrorWhenUpdatingAndPayloadNotMap(t *testing.T) {
-	handler, message := setUp([]byte("payload"), "$aws/things/test:device/shadow/update/accepted")
-	result, err := handler.HandleMessage(message)
-	assert.NotNil(t, err)
-	assert.Nil(t, result)
+	assertErrorWhenUpdatingAndPayloadIncorrect(t, "payload")
+}
+
+func TestErrorWhenUpdaingAndPayloadHasNoState(t *testing.T) {
+	assertErrorWhenUpdatingAndPayloadIncorrect(t, `{"payload": "invalid"}`)
+}
+
+func TestErrorWhenUpdatingAndPayloadHasNoReported(t *testing.T) {
+	assertErrorWhenUpdatingAndPayloadIncorrect(t, `{"state": {"invalid": {}"}}`)
+}
+
+func TestErrorWhenUpdatingAndStateNotMap(t *testing.T) {
+	assertErrorWhenUpdatingAndPayloadIncorrect(t, `{"state": "invalid"}`)
 }
 
 func TestNoErrorWhenDeletingAndPayloadNotMap(t *testing.T) {
-	handler, message := setUp([]byte("payload"), "$aws/things/test:device/shadow/delete/accepted")
-	result, err := handler.HandleMessage(message)
-	assert.Nil(t, err)
-	assert.Nil(t, result)
+	asserNoErrorWhenDeletingAndPaylodIncorrect(t, "payload")
 }
 
-func TestErrorWhenPayloadHasNoStateFieldStructure(t *testing.T) {
-	handler, message := setUp([]byte(`{"payload": "invalid"}`), "$aws/things/test:device/shadow/update/accepted")
+func TestNoErrorWhenDeletingAndStateNotMap(t *testing.T) {
+	asserNoErrorWhenDeletingAndPaylodIncorrect(t, `{"state": "invalid"}`)
+}
+
+func TestNoErrorWhenDeletingAndPayloadHasNoState(t *testing.T) {
+	asserNoErrorWhenDeletingAndPaylodIncorrect(t, `{"payload": "invalid"}`)
+}
+
+func TestNoErrorWhenDeletingAndPayloadHasNoReported(t *testing.T) {
+	asserNoErrorWhenDeletingAndPaylodIncorrect(t, `{"state": {"invalid": {}}}`)
+}
+
+func TestUpdateRootShadow(t *testing.T) {
+	assertUpdateShadow(t, "$aws/things/test:device/shadow", "test:device")
+}
+
+func TestDeleteRootShadow(t *testing.T) {
+	assertDeleteShadow(t, "$aws/things/test:device/shadow", "test:device")
+}
+
+func TestUpdateChildShadow(t *testing.T) {
+	assertUpdateShadow(t, "$aws/things/test:device/shadow/name/test:device:child", "test:device:child")
+}
+
+func TestDeleteChildShadow(t *testing.T) {
+	assertDeleteShadow(t, "$aws/things/test:device/shadow/name/test:device:child", "test:device:child")
+}
+
+func assertErrorWhenUpdatingAndPayloadIncorrect(t *testing.T, payload string) {
+	handler, message := setUp(payload, "$aws/things/test:device/shadow/update/accepted")
 	result, err := handler.HandleMessage(message)
 	assert.NotNil(t, err)
 	assert.Nil(t, result)
 }
 
-func TestNoErrorWhenDeletingAndPayloadNoStateFieldStructure(t *testing.T) {
-	handler, message := setUp([]byte(`{"payload": "invalid"}`), "$aws/things/test:device/shadow/delete/accepted")
+func asserNoErrorWhenDeletingAndPaylodIncorrect(t *testing.T, payload string) {
+	handler, message := setUp(payload, "$aws/things/test:device/shadow/delete/accepted")
 	result, err := handler.HandleMessage(message)
 	assert.Nil(t, err)
 	assert.Nil(t, result)
 }
 
-func TestUpdateRootShadow(t *testing.T) {
-	payload := `{
-		"state": {
-			"reported": {
-				"test": "value"
-			}
-		}
-	}`
+func assertDeleteShadow(t *testing.T, topicBase string, shadowID string) {
+	assertUpdateShadow(t, topicBase, shadowID)
 
-	expected := map[string]interface{}{
-		"test": "value",
-	}
-
-	handler, message := setUp([]byte(payload), "$aws/things/test:device/shadow/update/accepted")
+	topic := fmt.Sprint(topicBase, "/delete/accepted")
+	handler, message := setUp(validPayload, topic)
 	shadowHolder := handler.(passthrough.ShadowStateHolder)
 
 	result, err := handler.HandleMessage(message)
 	assert.Nil(t, err)
 	assert.Nil(t, result)
 
-	currentState := shadowHolder.GetCurrentShadowState("test:device")
-	assert.Equal(t, expected, currentState)
-}
-
-func TestDeleteRootShadow(t *testing.T) {
-	payload := `{
-		"state": {
-			"reported": {
-				"test": "value"
-			}
-		}
-	}`
-
-	handler, message := setUp([]byte(payload), "$aws/things/test:device/shadow/update/accepted")
-	shadowHolder := handler.(passthrough.ShadowStateHolder)
-
-	result, err := handler.HandleMessage(message)
-	assert.Nil(t, err)
-	assert.Nil(t, result)
-
-	currentState := shadowHolder.GetCurrentShadowState("test:device")
-	assert.NotNil(t, currentState)
-
-	message.SetContext(connector.SetTopicToCtx(message.Context(), "$aws/things/test:device/shadow/delete/accepted"))
-	handler.HandleMessage(message)
-
-	currentState = shadowHolder.GetCurrentShadowState("test:device")
-	assert.Nil(t, currentState)
-}
-
-func TestUpdateChildShadow(t *testing.T) {
-	payload := `{
-			"state": {
-				"reported": {
-					"test": "value"
-				}
-			}
-		}`
-
-	expected := map[string]interface{}{
-		"test": "value",
-	}
-
-	handler, message := setUp([]byte(payload), "$aws/things/test:device/shadow/name/test:device:child/update/accepted")
-	shadowHolder := handler.(passthrough.ShadowStateHolder)
-
-	result, err := handler.HandleMessage(message)
-	assert.Nil(t, err)
-	assert.Nil(t, result)
-
-	currentState := shadowHolder.GetCurrentShadowState("test:device:child")
-	assert.Equal(t, expected, currentState)
-}
-
-func TestDeleteChildShadow(t *testing.T) {
-	payload := `{
-			"state": {
-				"reported": {
-					"test": "value"
-				}
-			}
-		}`
-
-	handler, message := setUp([]byte(payload), "$aws/things/test:device/shadow/name/test:device:child/update/accepted")
-	shadowHolder := handler.(passthrough.ShadowStateHolder)
-
-	result, err := handler.HandleMessage(message)
-	assert.Nil(t, err)
-	assert.Nil(t, result)
-
-	currentState := shadowHolder.GetCurrentShadowState("test:device:child")
-	assert.NotNil(t, currentState)
-
-	message.SetContext(connector.SetTopicToCtx(message.Context(), "$aws/things/test:device/shadow/name/test:device:child/delete/accepted"))
-
-	result, err = handler.HandleMessage(message)
-	currentState = shadowHolder.GetCurrentShadowState("test:device:child")
+	currentState := shadowHolder.GetCurrentShadowState(settings().DeviceID)
 
 	assert.Nil(t, currentState)
 }
 
-func setUp(payload []byte, topic string) (handlers.MessageHandler, *message.Message) {
+func assertUpdateShadow(t *testing.T, topicBase string, shadowID string) {
+	topic := fmt.Sprint(topicBase, "/update/accepted")
+	handler, message := setUp(validPayload, topic)
+	shadowHolder := handler.(passthrough.ShadowStateHolder)
+
+	result, err := handler.HandleMessage(message)
+	assert.Nil(t, err)
+	assert.Nil(t, result)
+
+	currentState := shadowHolder.GetCurrentShadowState(shadowID)
+	assert.Equal(t, expectedShadowState, currentState)
+}
+
+func setUp(payload string, topic string) (handlers.MessageHandler, *message.Message) {
 	handler := CreateDefaultShadowStateHandler()
 	handler.Init(settings(), watermill.NopLogger{})
 
-	message := &message.Message{Payload: payload}
+	message := &message.Message{Payload: []byte(payload)}
 	message.SetContext(connector.SetTopicToCtx(message.Context(), topic))
 
 	return handler, message

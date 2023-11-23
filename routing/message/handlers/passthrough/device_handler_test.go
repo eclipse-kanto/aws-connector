@@ -75,272 +75,6 @@ func TestHandleRootFeatureEvent(t *testing.T) {
 	assert.Equal(t, `{"state":{"reported":{"status":200}}}`, messagePayload)
 }
 
-func TestUpdateRootFeaturePropertiesModify(t *testing.T) {
-	payload := `{
-		"topic":"test/device/things/twin/commands/modify",
-		"headers":{
-			"response-required":false
-		},
-		"path":"/features/test/properties",
-		"value":{
-				"status":200
-		}
-	}`
-	topic := "event"
-
-	currentState := map[string]interface{}{
-		"status":   100,
-		"obsolete": "true",
-	}
-
-	shadowStateHolder.add("test", currentState)
-
-	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
-	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
-	assert.Equal(t, `{"state":{"reported":{"obsolete":null,"status":200}}}`, messagePayload)
-
-	shadowStateHolder.cleanup()
-}
-
-func TestNoInteractionWithShadowStateHandlerWhenMerge(t *testing.T) {
-	payload := `{
-		"topic":"test/device/things/twin/commands/merge",
-		"headers":{
-			"response-required":false
-		},
-		"path":"/features/test/properties",
-		"value":{
-				"status":200
-		}
-	}`
-	topic := "event"
-
-	currentState := map[string]interface{}{
-		"status":   100,
-		"obsolete": "true",
-	}
-
-	shadowStateHolder.add("test", currentState)
-
-	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
-	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
-	assert.Equal(t, `{"state":{"reported":{"status":200}}}`, messagePayload)
-	assert.Equal(t, 0, shadowStateHolder.interractionCount)
-
-	shadowStateHolder.cleanup()
-}
-func TestUpdateSingleRootFeatureProperty(t *testing.T) {
-	payload := `{
-		"topic":"test/device/things/twin/commands/modify",
-		"headers":{
-			"response-required":false
-		},
-		"path":"/features/test/properties/status",
-		"value":200
-	}`
-	topic := "event"
-
-	currentState := map[string]interface{}{
-		"status": 100,
-	}
-
-	shadowStateHolder.add("test", currentState)
-
-	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
-	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
-	assert.Equal(t, `{"state":{"reported":{"status":200}}}`, messagePayload)
-
-	shadowStateHolder.cleanup()
-}
-
-func TestDeleteObsoleteRootFeatureProperty(t *testing.T) {
-	payload := `{
-		"topic":"test/device/things/twin/commands/modify",
-		"headers":{
-			"response-required":false
-		},
-		"path":"/features/test",
-		"value":{
-			"properties":{
-				"status":200
-			}
-		}
-	}`
-	topic := "event"
-
-	currentState := map[string]interface{}{
-		"status":   100,
-		"obsolete": "true",
-	}
-
-	shadowStateHolder.add("test", currentState)
-
-	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
-	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
-	assert.Equal(t, `{"state":{"reported":{"obsolete":null,"status":200}}}`, messagePayload)
-
-	shadowStateHolder.cleanup()
-}
-
-func TestPartiallyUpdateRootFeatureProperty(t *testing.T) {
-	payload := `{
-		"topic":"test/device/things/twin/commands/modify",
-		"headers":{
-			"response-required":false
-		},
-		"path":"/features/test/properties/status/code",
-		"value":200
-	}`
-	topic := "event"
-
-	currentState := map[string]interface{}{
-		"status":   100,
-		"obsolete": "false",
-	}
-
-	shadowStateHolder.add("test", currentState)
-
-	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
-	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
-	assert.Equal(t, `{"state":{"reported":{"status":{"code":200}}}}`, messagePayload)
-
-	shadowStateHolder.cleanup()
-}
-
-func TestPartiallyUpdateRootFeatureComplexSubProperty(t *testing.T) {
-	payload := `{
-		"topic":"test/device/things/twin/commands/modify",
-		"headers":{
-			"response-required":false
-		},
-		"path":"/features/test/properties/status/error",
-		"value":{
-			"code": 404,
-			"message": "Not Found"
-		}
-	}`
-	topic := "event"
-
-	currentState := map[string]interface{}{
-		"status": map[string]interface{}{
-			"error": map[string]interface{}{
-				"code":     200,
-				"message":  "No Error",
-				"obsolete": true,
-			},
-		},
-		"notObsolete": "true",
-	}
-
-	shadowStateHolder.add("test", currentState)
-
-	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
-	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
-	assert.Equal(t, `{"state":{"reported":{"status":{"error":{"code":404,"message":"Not Found","obsolete":null}}}}}`, messagePayload)
-
-	shadowStateHolder.cleanup()
-}
-func TestDoesNotDeleteRootFeaturePropertiesWhenPartiallyUpdatingOtherProperty(t *testing.T) {
-	payload := `{
-		"topic":"test/device/things/twin/commands/modify",
-		"headers":{
-			"response-required":false
-		},
-		"path":"/features/test/properties/status",
-		"value":{
-			"code": 200
-		}
-	}`
-	topic := "event"
-
-	currentState := map[string]interface{}{
-		"status": map[string]interface{}{
-			"code": 100,
-		},
-		"obsolete": "false",
-	}
-
-	shadowStateHolder.add("test", currentState)
-
-	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
-	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
-	assert.Equal(t, `{"state":{"reported":{"status":{"code":200}}}}`, messagePayload)
-
-	shadowStateHolder.cleanup()
-}
-
-func TestDeleteObsoleteRootFeatureNestedMapProperty(t *testing.T) {
-	payload := `{
-		"topic":"test/device/things/twin/commands/modify",
-		"headers":{
-			"response-required":false
-		},
-		"path":"/features/test",
-		"value":{
-			"properties":{
-				"nested": {
-					"status": 200
-				}
-			}
-		}
-	}`
-	topic := "event"
-
-	currentState := map[string]interface{}{
-		"nested": map[string]interface{}{
-			"status":   100,
-			"obsolete": "true",
-		},
-	}
-
-	shadowStateHolder.add("test", currentState)
-
-	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
-	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
-	assert.Equal(t, `{"state":{"reported":{"nested":{"obsolete":null,"status":200}}}}`, messagePayload)
-
-	shadowStateHolder.cleanup()
-}
-
-func TestDeleteObsoleteRootFeatureNestedArrayProperty(t *testing.T) {
-	payload := `{
-		"topic":"test/device/things/twin/commands/modify",
-		"headers":{
-			"response-required":false
-		},
-		"path":"/features/test",
-		"value":{
-			"properties":{
-				"nested": [
-					"firstElementNew",
-					{
-						"status": 200
-					}
-				]
-			}
-		}
-	}`
-	topic := "event"
-
-	currentState := map[string]interface{}{
-		"nested": []interface{}{
-			"firstElementOld",
-			map[string]interface{}{
-				"status":   100,
-				"obsolete": "true",
-			},
-		},
-	}
-
-	shadowStateHolder.add("test", currentState)
-
-	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
-	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
-	assert.Equal(t, `{"state":{"reported":{"nested":["firstElementNew",{"obsolete":null,"status":200}]}}}`, messagePayload)
-
-	shadowStateHolder.cleanup()
-}
-
 func TestHandleFeatureNoProperties(t *testing.T) {
 	payload := `{
 		"topic":"test/device/things/twin/commands/modify",
@@ -359,30 +93,6 @@ func TestHandleFeatureNoProperties(t *testing.T) {
 	assert.Equal(t, `{"state":{"reported":{"definition":["test:Definition:1.0.0"]}}}`, messagePayload)
 }
 
-func TestDeleteObsoleteElementFromArrayInFeatureNoProperties(t *testing.T) {
-	payload := `{
-		"topic":"test/device/things/twin/commands/modify",
-		"headers":{
-			"response-required":false
-		},
-		"path":"/features/test",
-		"value":{
-			"definition":["test:Definition:1.0.0"]
-		}
-	}`
-	topic := "event"
-
-	currentState := map[string]interface{}{
-		"definition": []string{"old:Definition:1.0.0", "obsolete:1.0.0"},
-	}
-	shadowStateHolder.add("test", currentState)
-
-	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
-	assert.Equal(t, "$aws/things/test:device/shadow/name/test/update", messageTopic)
-	assert.Equal(t, `{"state":{"reported":{"definition":["test:Definition:1.0.0"]}}}`, messagePayload)
-
-	shadowStateHolder.cleanup()
-}
 func TestHandleRootThingAttributes(t *testing.T) {
 	payload := `{
 		"topic":"test/device/things/twin/commands/modify",
@@ -399,29 +109,6 @@ func TestHandleRootThingAttributes(t *testing.T) {
 	assert.Equal(t, `{"state":{"reported":{"test":200}}}`, messagePayload)
 }
 
-func TestDoNotRemoveRootThingAttributeWhenUpdatingAnotherAttribute(t *testing.T) {
-	payload := `{
-		"topic":"test/device/things/twin/commands/modify",
-		"headers":{
-			"response-required":false
-		},
-		"path":"/attributes/test",
-		"value":200
-	}`
-	topic := "event"
-
-	currentState := map[string]interface{}{
-		"test":     100,
-		"obsolete": "false",
-	}
-	shadowStateHolder.add("test:device", currentState)
-
-	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
-	assert.Equal(t, "$aws/things/test:device/shadow/update", messageTopic)
-	assert.Equal(t, `{"state":{"reported":{"test":200}}}`, messagePayload)
-
-	shadowStateHolder.cleanup()
-}
 func TestHandleChildFeatureEvent(t *testing.T) {
 	payload := `{
 		"topic":"test/device:edge:containers/things/twin/commands/modify",
@@ -438,29 +125,6 @@ func TestHandleChildFeatureEvent(t *testing.T) {
 	assert.Equal(t, `{"state":{"reported":{"status":200}}}`, messagePayload)
 }
 
-func TestDoesNotRemoveChildFeaturePropertyWhenPartiallyUpdatingOtherProperty(t *testing.T) {
-	payload := `{
-		"topic":"test/device:edge:containers/things/twin/commands/modify",
-		"headers":{
-			"response-required":false
-		},
-		"path":"/features/test/properties/status",
-		"value":200
-	}`
-	topic := "event"
-
-	currentState := map[string]interface{}{
-		"status":   100,
-		"obsolete": "false",
-	}
-	shadowStateHolder.add("edge:containers:test", currentState)
-
-	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
-	assert.Equal(t, "$aws/things/test:device/shadow/name/edge:containers:test/update", messageTopic)
-	assert.Equal(t, `{"state":{"reported":{"status":200}}}`, messagePayload)
-
-	shadowStateHolder.cleanup()
-}
 func TestHandleChildThingAttributes(t *testing.T) {
 	payload := `{
 		"topic":"test/device:edge:containers/things/twin/commands/modify",
@@ -477,28 +141,261 @@ func TestHandleChildThingAttributes(t *testing.T) {
 	assert.Equal(t, `{"state":{"reported":{"test":200}}}`, messagePayload)
 }
 
-func TestDoNotRemoveChildThingAttributeWhenPartiallyUpdatingAnotherAttribute(t *testing.T) {
+func TestNoInteractionWithShadowStateHandlerWhenMerge(t *testing.T) {
 	payload := `{
-		"topic":"test/device:edge:containers/things/twin/commands/modify",
-		"headers":{
-			"response-required":false
+		"topic":"test/device/things/twin/commands/merge",
+		"path":"/features/test/properties",
+		"value":{
+				"status":200
+		}
+	}`
+
+	requireValidMessage(t, "event", payload)
+
+	assert.Equal(t, 0, shadowStateHolder.interractionCount)
+}
+
+func TestUpdateRootFeaturePropertiesModify(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"path":"/features/test/properties",
+		"value":{
+				"status":200
+		}
+	}`
+
+	currentState := map[string]interface{}{
+		"status":   100,
+		"obsolete": "true",
+	}
+
+	expected := `{"state":{"reported":{"obsolete":null,"status":200}}}`
+
+	assertMergeWithCurrentState(t, currentState, payload, "test", expected)
+}
+
+func TestUpdateSingleRootFeatureProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"path":"/features/test/properties/status",
+		"value":200
+	}`
+
+	currentState := map[string]interface{}{
+		"status": 100,
+	}
+
+	expected := `{"state":{"reported":{"status":200}}}`
+
+	assertMergeWithCurrentState(t, currentState, payload, "test", expected)
+}
+
+func TestDeleteObsoleteRootFeatureProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"path":"/features/test",
+		"value":{
+			"properties":{
+				"status":200
+			}
+		}
+	}`
+
+	currentState := map[string]interface{}{
+		"status":   100,
+		"obsolete": "true",
+	}
+
+	expected := `{"state":{"reported":{"obsolete":null,"status":200}}}`
+
+	assertMergeWithCurrentState(t, currentState, payload, "test", expected)
+}
+
+func TestPartiallyUpdateRootFeatureProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"path":"/features/test/properties/status/code",
+		"value":200
+	}`
+
+	currentState := map[string]interface{}{
+		"status":   100,
+		"obsolete": "false",
+	}
+
+	expected := `{"state":{"reported":{"status":{"code":200}}}}`
+
+	assertMergeWithCurrentState(t, currentState, payload, "test", expected)
+}
+
+func TestPartiallyUpdateRootFeatureComplexSubProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"path":"/features/test/properties/status/error",
+		"value":{
+			"code": 404,
+			"message": "Not Found"
+		}
+	}`
+
+	currentState := map[string]interface{}{
+		"status": map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":     200,
+				"message":  "No Error",
+				"obsolete": true,
+			},
 		},
+		"notObsolete": "true",
+	}
+
+	expected := `{"state":{"reported":{"status":{"error":{"code":404,"message":"Not Found","obsolete":null}}}}}`
+	assertMergeWithCurrentState(t, currentState, payload, "test", expected)
+}
+
+func TestDoesNotDeleteRootFeaturePropertiesWhenPartiallyUpdatingOtherProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"path":"/features/test/properties/status",
+		"value":{
+			"code": 200
+		}
+	}`
+
+	currentState := map[string]interface{}{
+		"status": map[string]interface{}{
+			"code": 100,
+		},
+		"obsolete": "false",
+	}
+
+	expected := `{"state":{"reported":{"status":{"code":200}}}}`
+	assertMergeWithCurrentState(t, currentState, payload, "test", expected)
+}
+
+func TestDeleteObsoleteRootFeatureNestedMapProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"path":"/features/test",
+		"value":{
+			"properties":{
+				"nested": {
+					"status": 200
+				}
+			}
+		}
+	}`
+
+	currentState := map[string]interface{}{
+		"nested": map[string]interface{}{
+			"status":   100,
+			"obsolete": "true",
+		},
+	}
+
+	expected := `{"state":{"reported":{"nested":{"obsolete":null,"status":200}}}}`
+
+	assertMergeWithCurrentState(t, currentState, payload, "test", expected)
+}
+
+func TestDeleteObsoleteRootFeatureNestedArrayProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"path":"/features/test",
+		"value":{
+			"properties":{
+				"nested": [
+					"firstElementNew",
+					{
+						"status": 200
+					}
+				]
+			}
+		}
+	}`
+
+	currentState := map[string]interface{}{
+		"nested": []interface{}{
+			"firstElementOld",
+			map[string]interface{}{
+				"status":   100,
+				"obsolete": "true",
+			},
+		},
+	}
+
+	expected := `{"state":{"reported":{"nested":["firstElementNew",{"obsolete":null,"status":200}]}}}`
+
+	assertMergeWithCurrentState(t, currentState, payload, "test", expected)
+}
+
+func TestDeleteObsoleteElementFromArrayInFeatureWithoutProperties(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
+		"path":"/features/test",
+		"value":{
+			"definition":["test:Definition:1.0.0"]
+		}
+	}`
+
+	currentState := map[string]interface{}{
+		"definition": []string{"old:Definition:1.0.0", "obsolete:1.0.0"},
+	}
+
+	expected := `{"state":{"reported":{"definition":["test:Definition:1.0.0"]}}}`
+
+	assertMergeWithCurrentState(t, currentState, payload, "test", expected)
+}
+
+func TestDoNotRemoveRootThingAttributeWhenUpdatingAnotherAttribute(t *testing.T) {
+	payload := `{
+		"topic":"test/device/things/twin/commands/modify",
 		"path":"/attributes/test",
 		"value":200
 	}`
-	topic := "event"
 
 	currentState := map[string]interface{}{
 		"test":     100,
 		"obsolete": "false",
 	}
-	shadowStateHolder.add("edge:containers", currentState)
 
-	messageTopic, messagePayload := requireValidMessage(t, topic, payload)
-	assert.Equal(t, "$aws/things/test:device/shadow/name/edge:containers/update", messageTopic)
-	assert.Equal(t, `{"state":{"reported":{"test":200}}}`, messagePayload)
+	expected := `{"state":{"reported":{"test":200}}}`
 
-	shadowStateHolder.cleanup()
+	assertMergeWithCurrentState(t, currentState, payload, "test:device", expected)
+}
+
+func TestDoesNotRemoveChildFeaturePropertyWhenUpdatingOtherProperty(t *testing.T) {
+	payload := `{
+		"topic":"test/device:edge:containers/things/twin/commands/modify",
+		"path":"/features/test/properties/status",
+		"value":200
+	}`
+
+	currentState := map[string]interface{}{
+		"status":   100,
+		"obsolete": "false",
+	}
+
+	expected := `{"state":{"reported":{"status":200}}}`
+
+	assertMergeWithCurrentState(t, currentState, payload, "edge:containers:test", expected)
+}
+
+func TestDoNotRemoveChildThingAttributeWhenPartiallyUpdatingAnotherAttribute(t *testing.T) {
+	payload := `{
+		"topic":"test/device:edge:containers/things/twin/commands/modify",
+		"path":"/attributes/test",
+		"value":200
+	}`
+
+	currentState := map[string]interface{}{
+		"test":     100,
+		"obsolete": "false",
+	}
+
+	expected := `{"state":{"reported":{"test":200}}}`
+
+	assertMergeWithCurrentState(t, currentState, payload, "edge:containers", expected)
 }
 
 func TestPayloadFilter(t *testing.T) {
@@ -624,6 +521,16 @@ func TestDeleteEntireElements(t *testing.T) {
 	// 4. Assert deletion of all attributes (child thing).
 	assertDelete(t, ":edge:containers", "/features/feature-1",
 		"$aws/things/test:device/shadow/name/edge:containers:feature-1/delete", "")
+}
+
+func assertMergeWithCurrentState(t *testing.T, currentState map[string]interface{}, payload string, shadowId string, expectedPayload string) {
+	shadowStateHolder.add(shadowId, currentState)
+
+	_, messagePayload := requireValidMessage(t, "event", payload)
+	assert.Equal(t, expectedPayload, messagePayload)
+
+	shadowStateHolder.cleanup()
+
 }
 
 func TestEvents(t *testing.T) {

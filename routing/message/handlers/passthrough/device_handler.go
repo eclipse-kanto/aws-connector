@@ -219,9 +219,7 @@ func (h deviceHandler) mergeWithCurrentShadowState(featureName string, newState 
 		return newState
 	}
 
-	path := envelope.Path
-
-	if subpath, ok := isSinglePropertyOrAttributeUpdate(path); ok {
+	if subpath, ok := isSinglePropertyOrAttributeUpdate(envelope.Path); ok {
 		return mergeSubpaths(currentState, newState, strings.Split(subpath, "/"))
 	}
 

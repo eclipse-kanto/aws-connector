@@ -190,18 +190,6 @@ golang.org/x/sync (v0.0.0-20220722155255-886fb9371eb4)
 * Project: https://github.com/golang/sync
 * Source:  https://github.com/golang/sync/tree/886fb9371eb4b47af10bff9c8025a8c9e1554b92
 
-jsonpath (v0.1.1)
-
-* License: BSD 3-Clause "New" or "Revised" License
-* Project: https://github.com/PaesslerAG/jsonpath
-* Source:  https://github.com/PaesslerAG/jsonpath/tree/v0.1.1
-
-gval (v1.0.0)
-
-* License: BSD 3-Clause "New" or "Revised" License
-* Project: https://github.com/PaesslerAG/gval
-* Source:  https://github.com/PaesslerAG/gval/tree/v1.0.0
-
 ## Cryptography
 
 Content may contain encryption software. The country in which you are currently
