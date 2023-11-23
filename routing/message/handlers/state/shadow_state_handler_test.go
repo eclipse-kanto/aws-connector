@@ -16,11 +16,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ThreeDotsLabs/watermill"
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/eclipse-kanto/aws-connector/config"
 	"github.com/eclipse-kanto/aws-connector/routing/message/handlers"
 	"github.com/eclipse-kanto/aws-connector/routing/message/handlers/passthrough"
+
+	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/eclipse-kanto/suite-connector/connector"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,7 +62,7 @@ func TestErrorWhenUpdatingAndPayloadNotMap(t *testing.T) {
 	assertErrorWhenUpdatingAndPayloadIncorrect(t, "payload")
 }
 
-func TestErrorWhenUpdaingAndPayloadHasNoState(t *testing.T) {
+func TestErrorWhenUpdatingAndPayloadHasNoState(t *testing.T) {
 	assertErrorWhenUpdatingAndPayloadIncorrect(t, `{"payload": "invalid"}`)
 }
 
@@ -74,19 +75,19 @@ func TestErrorWhenUpdatingAndStateNotMap(t *testing.T) {
 }
 
 func TestNoErrorWhenDeletingAndPayloadNotMap(t *testing.T) {
-	asserNoErrorWhenDeletingAndPaylodIncorrect(t, "payload")
+	assertNoErrorWhenDeletingAndPayloadIncorrect(t, "payload")
 }
 
 func TestNoErrorWhenDeletingAndStateNotMap(t *testing.T) {
-	asserNoErrorWhenDeletingAndPaylodIncorrect(t, `{"state": "invalid"}`)
+	assertNoErrorWhenDeletingAndPayloadIncorrect(t, `{"state": "invalid"}`)
 }
 
 func TestNoErrorWhenDeletingAndPayloadHasNoState(t *testing.T) {
-	asserNoErrorWhenDeletingAndPaylodIncorrect(t, `{"payload": "invalid"}`)
+	assertNoErrorWhenDeletingAndPayloadIncorrect(t, `{"payload": "invalid"}`)
 }
 
 func TestNoErrorWhenDeletingAndPayloadHasNoReported(t *testing.T) {
-	asserNoErrorWhenDeletingAndPaylodIncorrect(t, `{"state": {"invalid": {}}}`)
+	assertNoErrorWhenDeletingAndPayloadIncorrect(t, `{"state": {"invalid": {}}}`)
 }
 
 func TestUpdateRootShadow(t *testing.T) {
@@ -112,7 +113,7 @@ func assertErrorWhenUpdatingAndPayloadIncorrect(t *testing.T, payload string) {
 	assert.Nil(t, result)
 }
 
-func asserNoErrorWhenDeletingAndPaylodIncorrect(t *testing.T, payload string) {
+func assertNoErrorWhenDeletingAndPayloadIncorrect(t *testing.T, payload string) {
 	handler, message := setUp(payload, "$aws/things/test:device/shadow/delete/accepted")
 	result, err := handler.HandleMessage(message)
 	assert.Nil(t, err)
