@@ -523,8 +523,8 @@ func TestDeleteEntireElements(t *testing.T) {
 		"$aws/things/test:device/shadow/name/edge:containers:feature-1/delete", "")
 }
 
-func assertMergeWithCurrentState(t *testing.T, currentState map[string]interface{}, payload string, shadowId string, expectedPayload string) {
-	shadowStateHolder.add(shadowId, currentState)
+func assertMergeWithCurrentState(t *testing.T, currentState map[string]interface{}, payload string, shadowID string, expectedPayload string) {
+	shadowStateHolder.add(shadowID, currentState)
 
 	_, messagePayload := requireValidMessage(t, "event", payload)
 	assert.Equal(t, expectedPayload, messagePayload)
