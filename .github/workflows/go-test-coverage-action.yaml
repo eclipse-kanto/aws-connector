@@ -29,5 +29,5 @@ jobs:
           ## ideally this should be orphan branch (see below how to create this branch)
           git-branch: badges
           ## DEPRECATED
-          badge-text: coverage-with-test-action
+          badge-text: "coverage-with-test-action"
       
