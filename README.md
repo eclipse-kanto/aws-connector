@@ -1,7 +1,7 @@
 ![Kanto logo](https://github.com/eclipse-kanto/kanto/raw/main/logo/kanto.svg)
 
 # Eclipse Kanto - AWS Connector
-![coverage](https://github.com/bosch-io/aws-connector/badges/.badges/218-coverage-report/coverage.svg)
+![coverage](https://raw.githubusercontent.com/bosch-io/aws-connector/badges/.badges/218-coverage-report/coverage.svg)
 
 [![Go Coverage](https://github.com/bosch-io/aws-connector/wiki/coverage.svg)](https://github.com/bosch-io/aws-connector/wiki/coverage.html)
 
