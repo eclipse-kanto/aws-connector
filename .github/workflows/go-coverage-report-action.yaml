@@ -20,4 +20,5 @@ jobs:
           chart: true
           amend: true
           reuse-go: true
+          badge-title: coverage-with-report-action
       
