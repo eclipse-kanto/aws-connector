@@ -9,8 +9,11 @@
 # go-coverate-report
 [![Go Coverage](https://github.com/bosch-io/aws-connector/wiki/coverage.svg)](https://raw.githack.com/wiki/bosch-io/aws-connector/coverage.html)
 
+[Coverage chart](https://github.com/bosch-io/aws-connector/wiki)
+
 # code-coverage-summary
 
+[Covarege report](https://github.com/bosch-io/aws-connector/wiki/code-coverage-results)
 The **AWS Connector** is the main coordination center which forwards the local
 and remote messages. Messages processed by the **AWS Connector** will
 typically be related to telemetry data from the devices or command &
