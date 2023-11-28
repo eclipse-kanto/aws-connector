@@ -11,7 +11,7 @@ jobs:
         with:
           go-version: '1.21.0'
       - name: test
-        run: go test -v ./... -coverprofile=coverage.out
+        run: go test ./... -coverprofile=coverage.out
       - name: Update coverage report
         uses: ncruces/go-coverage-report@v0
         with:
@@ -20,5 +20,4 @@ jobs:
           chart: true
           amend: true
           reuse-go: true
-          badge-title: "coverage-with-report-action"
       
