@@ -1,0 +1,43 @@
+name: Create Coverage
+
+on: push
+permissions: write-all
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.21.0'
+      - name: Setup
+        run: go get github.com/boumenot/gocover-cobertura
+      - name: Test
+        run: go test ./... -coverprofile=coverage.out
+      - name: Convert
+        run: gocover-cobertura -by-files < coverage.out > coverage.xml
+      - name: Code Coverage Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: coverage.xml
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: false
+          indicators: true
+          output: both
+          thresholds: '60 80'
+      - name: Checkout wiki code
+        uses: actions/checkout@v2
+        with:
+          repository: ${{github.repository}}.wiki
+          path: markdown
+      - name: Push to wiki
+        run: |
+          cp code-coverage-results.md markdown/
+          cd markdown
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git diff-index --quiet HEAD || git commit -m "Add changes" && git push

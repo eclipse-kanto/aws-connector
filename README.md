@@ -1,9 +1,15 @@
 ![Kanto logo](https://github.com/eclipse-kanto/kanto/raw/main/logo/kanto.svg)
 
+
 # Eclipse Kanto - AWS Connector
+
+# go-test-coverage
 ![coverage](https://raw.githubusercontent.com/bosch-io/aws-connector/badges/.badges/218-coverage-report/coverage.svg)
 
+# go-coverate-report
 [![Go Coverage](https://github.com/bosch-io/aws-connector/wiki/coverage.svg)](https://raw.githack.com/wiki/bosch-io/aws-connector/coverage.html)
+
+# code-coverage-summary
 
 The **AWS Connector** is the main coordination center which forwards the local
 and remote messages. Messages processed by the **AWS Connector** will
