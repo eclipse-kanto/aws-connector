@@ -1,0 +1,11 @@
+name: Create Coverage
+
+on: push
+
+jobs:
+  generate-coverage-report:
+    uses: ./.github/workflows/coverage-template.yaml
+    with: 
+      coverage-command: |
+        go test ./... -coverprofile=coverage.out
+        echo Done
