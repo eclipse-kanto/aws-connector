@@ -36,11 +36,11 @@ func CommandsReqBus(router *message.Router,
 	reqCache *cache.Cache,
 	deviceID string,
 ) *message.Handler {
-	handler := filter(deviceID, routing.NewCommandRequestHandler(reqCache, deviceID))
+	handler := filter(deviceID, routing.NewCommandRequestHandler(reqCache, "", deviceID, false))
 	return router.AddHandler(handlerName, topics, sub, connector.TopicEmpty, pub, handler)
 }
 
-// filter creates middleware handler which filter all messages not assosiated with provided deviceId.
+// filter creates middleware handler which filter all messages not associated with provided deviceId.
 func filter(deviceID string, h message.HandlerFunc) message.HandlerFunc {
 	return func(msg *message.Message) ([]*message.Message, error) {
 		env := &protocol.Envelope{Headers: protocol.NewHeaders()}

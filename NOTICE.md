@@ -52,11 +52,11 @@ ThreeDotsLabs/watermill (1.1.1)
 * Project: https://github.com/ThreeDotsLabs/watermill
 * Source:  https://github.com/ThreeDotsLabs/watermill/releases/tag/v1.1.1
 
-cenkalti/backoff (3.0.0)
+cenkalti/backoff (3.2.2)
 
 * License: MIT License
 * Project: https://github.com/cenkalti/backoff
-* Source:  https://github.com/cenkalti/backoff/releases/tag/v3.0.0
+* Source:  https://github.com/cenkalti/backoff/releases/tag/v3.2.2
 
 tidwall/sjson (1.2.5)
 
@@ -112,17 +112,17 @@ gorilla/websocket (1.4.2)
 * Project: https://github.com/gorilla/websocket
 * Source:  https://github.com/gorilla/websocket/releases/tag/v1.4.2
 
-hashicorp/go-multierror (1.0.0)
+hashicorp/go-multierror (1.1.1)
 
 * License: Mozilla Public License 2.0
 * Project: https://github.com/hashicorp/go-multierror
-* Source:  https://github.com/hashicorp/go-multierror/releases/tag/v1.0.0
+* Source:  https://github.com/hashicorp/go-multierror/releases/tag/v1.1.1
 
-hashicorp/errwrap (1.0.0)
+hashicorp/errwrap (1.1.0)
 
 * License: Mozilla Public License 2.0
 * Project: https://github.com/hashicorp/errwrap
-* Source:  https://github.com/hashicorp/errwrap/releases/tag/v1.0.0
+* Source:  https://github.com/hashicorp/errwrap/releases/tag/v1.1.0
 
 lithammer/shortuuid (3.0.4)
 
@@ -160,11 +160,11 @@ imdario/mergo (0.3.12)
 * Project: https://github.com/imdario/mergo
 * Source:  https://github.com/imdario/mergo/releases/tag/0.3.12
 
-google/go-tpm (0.3.2)
+google/go-tpm (0.9.0)
 
 * License: Apache License 2.0
 * Project: https://github.com/google/go-tpm
-* Source:  https://github.com/google/go-tpm/releases/tag/v0.3.2
+* Source:  https://github.com/google/go-tpm/releases/tag/v0.9.0
 
 golang.org/x/net (0.17.0)
 
