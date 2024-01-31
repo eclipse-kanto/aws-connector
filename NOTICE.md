@@ -46,7 +46,7 @@ Jeffail/gabs (2.6.0)
 * Project: https://github.com/Jeffail/gabs
 * Source:  https://github.com/Jeffail/gabs/releases/tag/v2.6.0
 
-ThreeDotsLabs/watermill (1.1.1)
+ThreeDotsLabs/watermill (1.3.2)
 
 * License: MIT License
 * Project: https://github.com/ThreeDotsLabs/watermill
