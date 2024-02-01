@@ -124,11 +124,11 @@ hashicorp/errwrap (1.1.0)
 * Project: https://github.com/hashicorp/errwrap
 * Source:  https://github.com/hashicorp/errwrap/releases/tag/v1.1.0
 
-lithammer/shortuuid (3.0.4)
+lithammer/shortuuid (3.0.7)
 
 * License: MIT License
 * Project: https://github.com/lithammer/shortuuid
-* Source:  https://github.com/lithammer/shortuuid/releases/tag/v3.0.4
+* Source:  https://github.com/lithammer/shortuuid/releases/tag/v3.0.7
 
 oklog/ulid (1.3.1)
 
