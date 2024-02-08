@@ -74,7 +74,7 @@ func startRouter(
 	bus.MessageBus(router, awsPub, mosquittoSub, settings, deviceHandlers)
 	bus.MessageBus(router, cloudPub, awsSub, settings, cloudHandlers)
 	bus.CommandsReqBus(router, cloudPub, awsSub, reqCache, settings.DeviceID)
-	routing.CommandsResBus(router, awsPub, mosquittoSub, reqCache, settings.DeviceID)
+	routing.CommandsResBus(router, awsPub, mosquittoSub, reqCache, "", settings.DeviceID, false)
 
 	go func() {
 		ctx, cancel := context.WithCancel(context.Background())

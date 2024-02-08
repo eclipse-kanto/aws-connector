@@ -70,7 +70,7 @@ func (h *deviceHandler) Init(settings *config.CloudSettings, logger watermill.Lo
 	h.payloadFilters = settings.PayloadFiltersRegexp
 	h.topicFilter = settings.TopicFilterRegexp
 	h.logger = logger
-	h.defaultHandler = routing.AddTimestamp(routing.NewEventsHandler("", h.tenantID, h.deviceID))
+	h.defaultHandler = routing.AddTimestamp(routing.NewEventsHandler("", h.tenantID, h.deviceID, false))
 	return nil
 }
 
